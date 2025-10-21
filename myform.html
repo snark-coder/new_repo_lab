@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Basic Registration Form</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,'Helvetica Neue',Arial;}
+    body{display:flex;align-items:center;justify-content:center;padding:32px;background:#f5f7fb;color:#111}
+    .card{width:100%;max-width:520px;background:white;border-radius:12px;box-shadow:0 6px 20px rgba(20,20,40,0.08);padding:24px}
+    h1{font-size:20px;margin:0 0 12px}
+    form{display:grid;gap:12px}
+    .row{display:flex;gap:12px}
+    label{font-size:13px}
+    input[type="text"],input[type="email"],input[type="password"],input[type="tel"],input[type="date"],select{width:100%;padding:10px;border:1px solid #d6d9e6;border-radius:8px;font-size:14px}
+    .small{font-size:12px;color:#555}
+    .error{color:#b00020;font-size:12px;margin-top:6px}
+    .actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+    button{background:#0b74de;color:white;border:none;padding:10px 14px;border-radius:8px;font-weight:600;cursor:pointer}
+    button:disabled{opacity:0.6;cursor:not-allowed}
+    .hint{font-size:12px;color:#666}
+    .inline{display:flex;align-items:center;gap:8px}
+    .success{background:#e6f9f0;border:1px solid #b7f0cf;padding:10px;border-radius:8px;color:#064d2f}
+  </style>
+</head>
+<body>
+  <main class="card" role="main">
+    <h1>Register</h1>
+    <p class="small">Quick registration form with client-side JavaScript validations.</p>
+
+    <form id="regForm" novalidate>
+      <div class="row">
+        <div style="flex:1">
+          <label for="firstName">First name</label>
+          <input id="firstName" name="firstName" type="text" autocomplete="given-name" required aria-required="true" />
+          <div class="error" id="firstNameError" aria-live="polite"></div>
+        </div>
+        <div style="flex:1">
+          <label for="lastName">Last name</label>
+          <input id="lastName" name="lastName" type="text" autocomplete="family-name" required aria-required="true" />
+          <div class="error" id="lastNameError" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required aria-required="true" />
+        <div class="error" id="emailError" aria-live="polite"></div>
+      </div>
+
+      <div class="row">
+        <div style="flex:1">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="new-password" required aria-required="true" />
+          <div class="hint">At least 8 characters, with uppercase, number and special char.</div>
+          <div class="error" id="passwordError" aria-live="polite"></div>
+        </div>
+        <div style="flex:1">
+          <label for="confirmPassword">Confirm password</label>
+          <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" required aria-required="true" />
+          <div class="error" id="confirmPasswordError" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div>
+        <label for="phone">Phone</label>
+        <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="e.g. +1234567890" />
+        <div class="error" id="phoneError" aria-live="polite"></div>
+      </div>
+
+      <div class="row">
+        <div style="flex:1">
+          <label for="dob">Date of birth</label>
+          <input id="dob" name="dob" type="date" />
+          <div class="error" id="dobError" aria-live="polite"></div>
+        </div>
+        <div style="flex:1">
+          <label for="gender">Gender</label>
+          <select id="gender" name="gender">
+            <option value="">Choose...</option>
+            <option>Female</option>
+            <option>Male</option>
+            <option>Non-binary</option>
+            <option>Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="inline">
+        <input id="terms" name="terms" type="checkbox" />
+        <label for="terms">I agree to the <a href="#">terms and conditions</a>.</label>
+      </div>
+      <div class="error" id="termsError" aria-live="polite"></div>
+
+      <div class="actions">
+        <div class="hint">All fields marked required must be filled.</div>
+        <button id="submitBtn" type="submit">Create account</button>
+      </div>
+
+      <div id="result" style="margin-top:12px;display:none" aria-live="polite"></div>
+    </form>
+  </main>
+
+  <script>
+    // Validation helpers
+    const qs = (sel) => document.querySelector(sel);
+    const form = qs('#regForm');
+    const result = qs('#result');
+
+    function showError(id, message) {
+      const el = qs('#' + id + 'Error');
+      el.textContent = message || '';
+    }
+
+    function isEmailValid(email) {
+      // simple but reasonable email regex
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function isStrongPassword(pw) {
+      // min 8 chars, at least one uppercase, one digit, one special char
+      return /(?=.{8,})(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/.test(pw);
+    }
+
+    function isPhoneValid(phone) {
+      if (!phone) return true; // optional field
+      // allow + and digits, between 7 and 15 digits
+      const digits = phone.replace(/[^\d]/g, '');
+      return digits.length >= 7 && digits.length <= 15;
+    }
+
+    function isAtLeastAge(dobStr, age) {
+      if (!dobStr) return true; // optional
+      const dob = new Date(dobStr);
+      if (Number.isNaN(dob.getTime())) return false;
+      const today = new Date();
+      let years = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) years--;
+      return years >= age;
+    }
+
+    // Field-level validation
+    function validateField(field) {
+      const id = field.id;
+      const val = field.value.trim();
+      switch(id){
+        case 'firstName':
+          if (!val) showError('firstName', 'First name is required.'); else showError('firstName', '');
+          break;
+        case 'lastName':
+          if (!val) showError('lastName', 'Last name is required.'); else showError('lastName', '');
+          break;
+        case 'email':
+          if (!val) showError('email', 'Email is required.');
+          else if (!isEmailValid(val)) showError('email', 'Enter a valid email address.');
+          else showError('email', '');
+          break;
+        case 'password':
+          if (!val) showError('password', 'Password is required.');
+          else if (!isStrongPassword(val)) showError('password', 'Password must be 8+ chars, include uppercase, number and special char.');
+          else showError('password', '');
+          // also re-check confirm
+          validateField(qs('#confirmPassword'));
+          break;
+        case 'confirmPassword':
+          const pw = qs('#password').value;
+          if (!val) showError('confirmPassword', 'Please confirm your password.');
+          else if (val !== pw) showError('confirmPassword', 'Passwords do not match.');
+          else showError('confirmPassword', '');
+          break;
+        case 'phone':
+          if (!isPhoneValid(val)) showError('phone', 'Enter a valid phone number (7–15 digits).'); else showError('phone', '');
+          break;
+        case 'dob':
+          if (val && !isAtLeastAge(val, 13)) showError('dob', 'You must be at least 13 years old.'); else showError('dob', '');
+          break;
+      }
+    }
+
+    // Attach input/change listeners for instant feedback
+    ['firstName','lastName','email','password','confirmPassword','phone','dob'].forEach(id => {
+      const f = qs('#' + id);
+      if (!f) return;
+      f.addEventListener('input', () => validateField(f));
+      f.addEventListener('blur', () => validateField(f));
+    });
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      result.style.display = 'none';
+
+      // run validations for all relevant fields
+      ['firstName','lastName','email','password','confirmPassword','phone','dob'].forEach(id => {
+        const f = qs('#' + id);
+        if (f) validateField(f);
+      });
+
+      // terms checkbox
+      const terms = qs('#terms');
+      if (!terms.checked) showError('terms', 'You must agree to the terms and conditions.'); else showError('terms', '');
+
+      // collect whether any errors visible
+      const hasErrors = Array.from(document.querySelectorAll('.error')).some(el => el.textContent.trim() !== '');
+
+      if (hasErrors) {
+        result.style.display = 'block';
+        result.className = 'error';
+        result.textContent = 'Please fix the errors above and try again.';
+        result.scrollIntoView({behavior:'smooth',block:'center'});
+        return;
+      }
+
+      // Simulate successful submission
+      result.style.display = 'block';
+      result.className = 'success';
+      result.innerHTML = '<strong>Success!</strong> Your account has been created (demo only).';
+
+      // For demo: log safe values (don't log passwords in real apps)
+      const payload = {
+        firstName: qs('#firstName').value.trim(),
+        lastName: qs('#lastName').value.trim(),
+        email: qs('#email').value.trim(),
+        phone: qs('#phone').value.trim(),
+        dob: qs('#dob').value,
+        gender: qs('#gender').value
+      };
+      console.log('Registration payload (demo):', payload);
+
+      // reset form after short delay for demo UX
+      setTimeout(() => {
+        form.reset();
+        // clear errors
+        document.querySelectorAll('.error').forEach(el => el.textContent = '');
+        result.style.display = 'none';
+      }, 1800);
+    });
+  </script>
+</body>
+</html>
