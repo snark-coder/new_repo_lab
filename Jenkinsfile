@@ -25,20 +25,20 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo "Build Docker Image"
-                bat "docker build -t seleniumdemoapp:v1 ."
+                bat "docker build -t my_repo:latest ."
             }
         }
         stage('Docker Login') {
             steps {
-                  bat 'docker login -u bhavani765 -p bhanu@123'
+                  bat 'docker login -u durga2458 -p Krn19@2458'
                 }
             }
         stage('push Docker Image to Docker Hub') {
             steps {
                 echo "push Docker Image to Docker Hub"
-                bat "docker tag seleniumdemoapp:v1 bhavani765/sample:seleniumtestimage"               
+                bat "docker tag seleniumdemoapp:latest durga2458/my_repo:formimg3"               
                     
-                bat "docker push bhavani765/sample:seleniumtestimage"
+                bat "docker push durga2458/my_repo:formimg3"
                 
             }
         }
